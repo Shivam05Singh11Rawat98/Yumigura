@@ -55,6 +55,31 @@ make down
   - `POST /api/v1/auth/register`
   - `POST /api/v1/auth/login`
   - `GET /api/v1/auth/me` (Bearer token)
+- Organization/Project endpoints added:
+  - `POST /api/v1/organizations`
+  - `GET /api/v1/organizations`
+  - `POST /api/v1/organizations/{organization_id}/members`
+  - `GET /api/v1/organizations/{organization_id}/members`
+  - `POST /api/v1/organizations/{organization_id}/projects`
+  - `GET /api/v1/organizations/{organization_id}/projects`
+  - `POST /api/v1/projects/{project_id}/members`
+  - `GET /api/v1/projects/{project_id}/members`
+- Issue/Comment endpoints added:
+  - `POST /api/v1/projects/{project_id}/issues`
+  - `GET /api/v1/projects/{project_id}/issues`
+  - `GET /api/v1/projects/{project_id}/issues/{issue_id}`
+  - `PATCH /api/v1/projects/{project_id}/issues/{issue_id}`
+  - `DELETE /api/v1/projects/{project_id}/issues/{issue_id}` (soft delete)
+  - `POST /api/v1/issues/{issue_id}/comments`
+  - `GET /api/v1/issues/{issue_id}/comments`
+- RBAC roles now enforced:
+  - Organization roles: `owner`, `admin`, `member`
+  - Project roles: `admin`, `member` (org owner is treated as highest privilege)
+- Hardening completed:
+  - Standardized API error contract: `{"error": {"code", "message", "details?"}}`
+  - Pagination/sorting on list endpoints (`limit`, `offset`, `sort_by`, `sort_order`)
+  - Audit events for issue and membership mutations (`audit_events` collection)
+  - Stricter request validation (slug/key patterns, label constraints, non-empty issue updates)
 - Security utilities added:
   - Password hashing (`passlib`)
   - JWT create/verify (`python-jose`)

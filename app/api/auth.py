@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -7,7 +7,12 @@ from motor.motor_asyncio import AsyncIOMotorCollection
 from pydantic import BaseModel, Field, field_validator
 
 from app.api.deps import get_user_collection
-from app.core.security import create_access_token, decode_access_token, hash_password, verify_password
+from app.core.security import (
+    create_access_token,
+    decode_access_token,
+    hash_password,
+    verify_password,
+)
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 bearer_scheme = HTTPBearer(auto_error=False)
@@ -100,7 +105,7 @@ async def register_user(
         "password_hash": hash_password(body.password),
         "full_name": body.full_name,
         "role": "member",
-        "created_at": datetime.now(timezone.utc),
+        "created_at": datetime.now(UTC),
     }
     result = await users.insert_one(user_doc)
     user_doc["_id"] = result.inserted_id

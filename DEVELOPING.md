@@ -71,6 +71,90 @@ docker compose down
 - `POST /api/v1/auth/register` -> create user + issue JWT
 - `POST /api/v1/auth/login` -> verify credentials + issue JWT
 - `GET /api/v1/auth/me` -> return current user from Bearer token
+- `POST /api/v1/organizations` -> create organization (auth required)
+- `GET /api/v1/organizations` -> list owned organizations (auth required)
+- `POST /api/v1/organizations/{organization_id}/members` -> add/update org member role
+- `GET /api/v1/organizations/{organization_id}/members` -> list org members
+- `POST /api/v1/organizations/{organization_id}/projects` -> create project (org owner/admin)
+- `GET /api/v1/organizations/{organization_id}/projects` -> list projects (org member+)
+- `POST /api/v1/projects/{project_id}/members` -> add/update project member role
+- `GET /api/v1/projects/{project_id}/members` -> list project members
+- `POST /api/v1/projects/{project_id}/issues` -> create issue (project member+)
+- `GET /api/v1/projects/{project_id}/issues` -> list issues with filters (project member+)
+- `GET /api/v1/projects/{project_id}/issues/{issue_id}` -> get issue by id (project member+)
+- `PATCH /api/v1/projects/{project_id}/issues/{issue_id}` -> update issue (project admin/owner)
+- `DELETE /api/v1/projects/{project_id}/issues/{issue_id}` -> soft delete issue (project admin/owner)
+- `POST /api/v1/issues/{issue_id}/comments` -> add comment (project member+)
+- `GET /api/v1/issues/{issue_id}/comments` -> list comments (project member+)
+
+## 6.1) RBAC Summary
+
+- Organization roles: `owner`, `admin`, `member`
+- Project roles: `admin`, `member` (org owner has full project access)
+- Organization/project membership data is stored in:
+  - `organization_members`
+  - `project_members`
+- Current policy:
+  - Org `owner/admin` can create projects and manage members
+  - Project `admin` (and org owner) can update/delete issues
+  - Project `member` can read/create issues and add comments
+
+## 6.2) Pagination and Sorting
+
+List endpoints support:
+
+- `limit` (default `20`, max `100`)
+- `offset` (default `0`)
+- `sort_by` (endpoint-specific allowed fields)
+- `sort_order` (`asc` or `desc`)
+
+Examples:
+
+```bash
+GET /api/v1/organizations?limit=10&offset=0&sort_by=name&sort_order=asc
+GET /api/v1/projects/{project_id}/issues?status=To%20Do&sort_by=created_at&sort_order=desc
+```
+
+## 6.3) Error Contract
+
+Errors are normalized to:
+
+```json
+{
+  "error": {
+    "code": "http_403",
+    "message": "Not allowed"
+  }
+}
+```
+
+Validation errors include `details`:
+
+```json
+{
+  "error": {
+    "code": "validation_error",
+    "message": "Request validation failed",
+    "details": []
+  }
+}
+```
+
+## 6.4) Audit Events
+
+Important issue/membership mutations write audit events to `audit_events`:
+
+- Organization/project member add or role update
+- Issue create/update/delete
+
+Stored fields:
+
+- `actor_user_id`
+- `event_type`
+- `entity_type`
+- `entity_id`
+- `payload`
+- `created_at`
 
 ## 7) Code Structure
 
@@ -86,6 +170,35 @@ docker compose down
 ## 7.1) Runtime Architecture Snapshot
 
 ![Runtime Architecture](docs/diagrams/runtime_architecture.svg)
+
+## 7.2) Mongo Index Initialization
+
+Indexes are created automatically during app startup in:
+
+- `app/db/mongo.py` via `ensure_indexes()`
+
+Current indexes include:
+
+- Unique:
+  - `users.email`
+  - `organizations.slug`
+  - `organization_members (organization_id, user_id)`
+  - `projects (organization_id, key)`
+  - `project_members (project_id, user_id)`
+  - `issues (project_id, issue_key)`
+- Query/performance:
+  - `organizations.owner_user_id`
+  - `organization_members.user_id`
+  - `projects.organization_id`
+  - `project_members.user_id`
+  - `issues (project_id, status)`
+  - `issues (project_id, assignee_user_id)`
+  - `issues.labels`
+  - `issues (project_id, deleted_at)`
+  - `comments (issue_id, deleted_at)`
+  - `comments.author_user_id`
+  - `audit_events (entity_type, entity_id, created_at)`
+  - `audit_events (actor_user_id, created_at)`
 
 ## 8) Testing Strategy
 
@@ -113,11 +226,8 @@ docker compose down
 
 ## 10) Next Implementation Target
 
-Phase 1 continuation:
+Phase 2 (Jira-like workflow):
 
-- Add base domain models/collections for:
-  - `organizations`
-  - `projects`
-  - `issues`
-  - `comments`
-- Implement RBAC checks on org/project operations.
+- Custom status definitions and transitions
+- Kanban/backlog/sprint entities
+- Activity feed views from `audit_events`

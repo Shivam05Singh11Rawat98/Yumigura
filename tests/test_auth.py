@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from fastapi.testclient import TestClient
 
@@ -69,7 +69,7 @@ def test_register_duplicate_email_returns_conflict() -> None:
         "password_hash": "x",
         "full_name": None,
         "role": "member",
-        "created_at": datetime.now(timezone.utc),
+        "created_at": datetime.now(UTC),
     }
     response = client.post(
         "/api/v1/auth/register",
@@ -78,7 +78,7 @@ def test_register_duplicate_email_returns_conflict() -> None:
     _cleanup_overrides()
 
     assert response.status_code == 409
-    assert response.json()["detail"] == "Email already registered"
+    assert response.json()["error"]["message"] == "Email already registered"
 
 
 def test_login_and_me_flow() -> None:
@@ -113,7 +113,7 @@ def test_login_invalid_credentials() -> None:
     _cleanup_overrides()
 
     assert response.status_code == 401
-    assert response.json()["detail"] == "Invalid credentials"
+    assert response.json()["error"]["message"] == "Invalid credentials"
 
 
 def test_me_requires_auth() -> None:
@@ -122,4 +122,4 @@ def test_me_requires_auth() -> None:
     _cleanup_overrides()
 
     assert response.status_code == 401
-    assert response.json()["detail"] == "Not authenticated"
+    assert response.json()["error"]["message"] == "Not authenticated"
