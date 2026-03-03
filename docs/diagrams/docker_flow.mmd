@@ -1,0 +1,6 @@
+flowchart LR
+    DEV["Developer"] --> CMD["docker compose up --build"]
+    CMD --> BUILD["Build API image from Dockerfile"]
+    CMD --> START["Start services from docker-compose.yml"]
+    START --> API["yumigura_api container"]
+    START --> DB["yumigura_mongo container"]

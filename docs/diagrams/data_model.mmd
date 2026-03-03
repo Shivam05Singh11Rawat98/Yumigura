@@ -1,0 +1,84 @@
+erDiagram
+    USERS {
+        string _id PK
+        string email
+        string password_hash
+        string full_name
+        string role
+        datetime created_at
+        bool is_active
+    }
+
+    ORGANIZATIONS {
+        string _id PK
+        string name
+        string slug
+        string owner_user_id FK
+        datetime created_at
+    }
+
+    ORGANIZATION_MEMBERS {
+        string _id PK
+        string organization_id FK
+        string user_id FK
+        string role
+        datetime joined_at
+    }
+
+    PROJECTS {
+        string _id PK
+        string organization_id FK
+        string key
+        string name
+        string description
+        string created_by_user_id FK
+        int issue_counter
+        datetime created_at
+        bool archived
+    }
+
+    PROJECT_MEMBERS {
+        string _id PK
+        string project_id FK
+        string user_id FK
+        string role
+        datetime joined_at
+    }
+
+    ISSUES {
+        string _id PK
+        string organization_id FK
+        string project_id FK
+        string issue_key
+        string title
+        string description
+        string issue_type
+        string status
+        string priority
+        string reporter_user_id FK
+        string assignee_user_id FK
+        string[] labels
+        datetime created_at
+        datetime updated_at
+        datetime deleted_at
+    }
+
+    COMMENTS {
+        string _id PK
+        string issue_id FK
+        string author_user_id FK
+        string body
+        datetime created_at
+        datetime updated_at
+        datetime deleted_at
+    }
+
+    USERS ||--o{ ORGANIZATIONS : owns
+    USERS ||--o{ ORGANIZATION_MEMBERS : member_of
+    ORGANIZATIONS ||--o{ ORGANIZATION_MEMBERS : has
+    ORGANIZATIONS ||--o{ PROJECTS : contains
+    PROJECTS ||--o{ PROJECT_MEMBERS : has
+    USERS ||--o{ PROJECT_MEMBERS : member_of
+    PROJECTS ||--o{ ISSUES : contains
+    ISSUES ||--o{ COMMENTS : has
+    USERS ||--o{ COMMENTS : writes

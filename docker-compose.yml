@@ -1,0 +1,23 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: yumigura_api
+    env_file:
+      - .env
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./:/app
+      - ./data/uploads:/app/data/uploads
+    depends_on:
+      - mongo
+
+  mongo:
+    image: mongo:8.0
+    container_name: yumigura_mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - ./data/mongo:/data/db

@@ -1,0 +1,22 @@
+sequenceDiagram
+    participant Client
+    participant API as Auth API
+    participant Security as Security Module
+    participant Users as Users Collection
+
+    Client->>API: POST /register (email, password)
+    API->>Security: hash_password(password)
+    API->>Users: insert user document
+    API->>Security: create_access_token(sub=email)
+    API-->>Client: 201 access_token + user
+
+    Client->>API: POST /login (email, password)
+    API->>Users: find_one(email)
+    API->>Security: verify_password(plain, hash)
+    API->>Security: create_access_token(sub=email)
+    API-->>Client: 200 access_token + user
+
+    Client->>API: GET /me (Bearer token)
+    API->>Security: decode_access_token(token)
+    API->>Users: find_one(email=sub)
+    API-->>Client: 200 user OR 401

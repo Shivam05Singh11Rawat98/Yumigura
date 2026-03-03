@@ -1,0 +1,7 @@
+flowchart TD
+    C["Client (Browser/Postman)"] --> API["FastAPI App (yumigura_api)"]
+    API --> AUTH["Auth Router (/api/v1/auth/*)"]
+    API --> HEALTH["Health Router (/api/v1/health)"]
+    AUTH --> DEPS["Dependency Layer (get_user_collection)"]
+    DEPS --> DBLAYER["Mongo Layer (connect/get_db)"]
+    DBLAYER --> MONGO["MongoDB (yumigura_mongo)"]
